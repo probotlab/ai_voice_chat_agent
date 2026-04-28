@@ -3,10 +3,11 @@ import datetime as dt
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, create_engine
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
+print("befor db url")
 # DATABASE_URL = "sqlite:///./appointments_db.db"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-if db_url:
+if DATABASE_URL:
     print(f"Database URL found! Starts with: {db_url[:10]}...")
 else:
     print("Database URL is MISSING from environment variables!")
