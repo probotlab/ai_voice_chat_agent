@@ -9,7 +9,7 @@ print("befor db url")
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL:
-    print(f"Database URL found! Starts with: {db_url[:10]}...")
+    print(f"Database URL found! Starts with: {DATABASE_URL[:10]}...")
 else:
     print("Database URL is MISSING from environment variables!")
 
