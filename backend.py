@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 from pydantic import BaseModel
 import uvicorn
+import os
 
 # Import from your database.py file
 from database import init_db, Appointment, get_db
