@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexClinic Voice Agent</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px; background-color: #f4f4f9; }
+        .btn { padding: 15px 30px; font-size: 18px; cursor: pointer; border: none; border-radius: 5px; margin: 10px; color: white; font-weight: bold; }
+        
+        #call-btn { background-color: #4CAF50; } /* Green */
+        #call-btn:hover { background-color: #45a049; }
+        
+        #decline-btn { background-color: #f44336; } /* Red */
+        #decline-btn:hover { background-color: #da190b; }
+        
+        #status-box { margin-top: 20px; padding: 15px; border-radius: 5px; background-color: #e0e0e0; display: inline-block; min-width: 300px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h1>NexClinic AI Receptionist</h1>
+    
+    <button id="call-btn" class="btn">📞 Call Agent</button>
+    <button id="decline-btn" class="btn">🛑 Decline / End</button>
+    
+    <br>
+    <div id="status-box">Status: Disconnected</div>
+
+    <script type="module">
+        // Import Vapi correctly using modern ES Modules
+        import Vapi from "https://esm.sh/@vapi-ai/web";
+
+        try {
+            // --- IMPORTANT: PASTE YOUR KEYS HERE ---
+            const vapi = new Vapi("860dd056-1472-45de-a12e-df59fad649e5");
+            const assistantId = "f4c6961f-9aa9-44e2-ba6e-ceb7d8233c32";
+
+            const callBtn = document.getElementById("call-btn");
+            const declineBtn = document.getElementById("decline-btn");
+            const statusBox = document.getElementById("status-box");
+
+            callBtn.addEventListener("click", () => {
+                statusBox.innerText = "Status: Requesting Microphone & Connecting...";
+                statusBox.style.backgroundColor = "#fff3cd"; // Yellow
+                vapi.start(assistantId);
+            });
+
+            declineBtn.addEventListener("click", () => {
+                vapi.stop();
+                statusBox.innerText = "Status: Call Declined / Ended.";
+                statusBox.style.backgroundColor = "#e0e0e0"; // Gray
+            });
+
+            // Vapi Status Events
+            vapi.on('call-start', () => {
+                statusBox.innerText = "Status: Call Active! Start speaking.";
+                statusBox.style.backgroundColor = "#d4edda"; // Green
+            });
+
+            vapi.on('call-end', () => {
+                statusBox.innerText = "Status: Call Ended.";
+                statusBox.style.backgroundColor = "#e0e0e0"; // Gray
+            });
+
+            vapi.on('error', (error) => {
+                console.error("Vapi Error:", error);
+                statusBox.innerText = "Error: " + (error.message || "Failed to connect.");
+                statusBox.style.backgroundColor = "#f8d7da"; // Red
+            });
+
+        } catch (err) {
+            document.getElementById("status-box").innerText = "Fatal Setup Error! Check console.";
+            document.getElementById("status-box").style.backgroundColor = "#f8d7da";
+            console.error("Setup Error:", err);
+        }
+    </script>
+
+</body>
+</html>
