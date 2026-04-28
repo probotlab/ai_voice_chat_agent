@@ -119,6 +119,10 @@ def list_appointments(date: dt.date | None = None, db: Session = Depends(get_db)
 def serve_voice_agent():
     # This tells FastAPI to send your agent.html file to the browser
     return FileResponse("agent.html")
-
+    
 if __name__ == "__main__":
-    uvicorn.run("backend:app", host="127.0.0.1", port=4444, reload=True)
+    # Render sets a 'PORT' env var automatically. If it's not there, use 10000.
+    port = int(os.environ.get("PORT", 10000))
+    
+    # Use 0.0.0.0 to make it accessible to Render's network
+    uvicorn.run("backend:app", host="0.0.0.0", port=port, reload=False)
