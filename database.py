@@ -6,6 +6,11 @@ from sqlalchemy.orm import Session, declarative_base, sessionmaker
 # DATABASE_URL = "sqlite:///./appointments_db.db"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+if db_url:
+    print(f"Database URL found! Starts with: {db_url[:10]}...")
+else:
+    print("Database URL is MISSING from environment variables!")
+
 engine = create_engine(DATABASE_URL) 
 # , connect_args={"check_same_thread": False}
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
