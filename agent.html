@@ -40,10 +40,25 @@
             const declineBtn = document.getElementById("decline-btn");
             const statusBox = document.getElementById("status-box");
 
-            callBtn.addEventListener("click", () => {
+            callBtn.addEventListener("click", async () => {
                 statusBox.innerText = "Status: Requesting Microphone & Connecting...";
                 statusBox.style.backgroundColor = "#fff3cd"; // Yellow
-                vapi.start(assistantId);
+                
+                // Add a check to see if the browser supports media devices
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    statusBox.innerText = "Error: Your browser is blocking the microphone (Try using HTTPS).";
+                    statusBox.style.backgroundColor = "#f8d7da"; // Red
+                    return;
+                }
+
+                try {
+                    // Start the call
+                    vapi.start(assistantId);
+                } catch (err) {
+                    statusBox.innerText = "Error starting call. Check console.";
+                    statusBox.style.backgroundColor = "#f8d7da"; // Red
+                    console.error(err);
+                }
             });
 
             declineBtn.addEventListener("click", () => {
@@ -65,7 +80,14 @@
 
             vapi.on('error', (error) => {
                 console.error("Vapi Error:", error);
-                statusBox.innerText = "Error: " + (error.message || "Failed to connect.");
+                
+                // Make the error message more readable
+                let errorMsg = error.message || "Failed to connect.";
+                if (errorMsg.toLowerCase().includes("mic") || errorMsg.toLowerCase().includes("permission")) {
+                    errorMsg = "Microphone access denied! Please allow the mic and use HTTPS.";
+                }
+                
+                statusBox.innerText = "Error: " + errorMsg;
                 statusBox.style.backgroundColor = "#f8d7da"; // Red
             });
 
