@@ -85,35 +85,79 @@ def cancel_appointment(request: CancelAppointmentRequest, db: Session = Depends(
     return CancelAppointmentResponse(canceled_count=len(appointments))
 
 # 3. List Appointments (FIXED for 422 Error)
-@app.get("/list_appointments/")
-def list_appointments(date: dt.date | None = None, db: Session = Depends(get_db)):
-    query = select(Appointment).where(Appointment.cancelled == False)
+# @app.get("/list_appointments/")
+# def list_appointments(date: dt.date | None = None, db: Session = Depends(get_db)):
+#     query = select(Appointment).where(Appointment.cancelled == False)
     
-    # If the frontend passes a specific date, filter by it
-    if date:
-        start_dt = dt.datetime.combine(date, dt.time.min)
-        end_dt = start_dt + dt.timedelta(days=1)
-        query = query.where(Appointment.start_time >= start_dt)
-        query = query.where(Appointment.start_time < end_dt)
+#     # If the frontend passes a specific date, filter by it
+#     if date:
+#         start_dt = dt.datetime.combine(date, dt.time.min)
+#         end_dt = start_dt + dt.timedelta(days=1)
+#         query = query.where(Appointment.start_time >= start_dt)
+#         query = query.where(Appointment.start_time < end_dt)
         
-    query = query.order_by(Appointment.start_time.asc())
+#     query = query.order_by(Appointment.start_time.asc())
     
-    result = db.execute(query)
-    appointments = result.scalars().all()
+#     result = db.execute(query)
+#     appointments = result.scalars().all()
     
-    booked_appointments = []
-    for appointment in appointments:
-        appointment_obj = AppointmentResponse(
-            id=appointment.id,
-            patient_name=appointment.patient_name,
-            reason=appointment.reason,
-            start_time=appointment.start_time,
-            cancelled=appointment.cancelled,
-            created_at=appointment.created_at
-        )
-        booked_appointments.append(appointment_obj) # Fixed: Correct list append
+#     booked_appointments = []
+#     for appointment in appointments:
+#         appointment_obj = AppointmentResponse(
+#             id=appointment.id,
+#             patient_name=appointment.patient_name,
+#             reason=appointment.reason,
+#             start_time=appointment.start_time,
+#             cancelled=appointment.cancelled,
+#             created_at=appointment.created_at
+#         )
+#         booked_appointments.append(appointment_obj) # Fixed: Correct list append
         
-    return booked_appointments
+#     return booked_appointments
+
+@app.get("/available_slots/")
+def get_available_slots(date: dt.date | None = None, db: Session = Depends(get_db)):
+    # 1. Default to today if no date is provided by the AI
+    target_date = date if date else dt.date.today()
+    
+    # 2. Fetch all BOOKED appointments for the target date
+    start_dt = dt.datetime.combine(target_date, dt.time.min)
+    end_dt = start_dt + dt.timedelta(days=1)
+    
+    result = db.execute(
+        select(Appointment)
+        .where(Appointment.start_time >= start_dt)
+        .where(Appointment.start_time < end_dt)
+        .where(Appointment.cancelled == False)
+    )
+    booked_appointments = result.scalars().all()
+    
+    # Extract the exact booked datetimes
+    booked_times = [app.start_time for app in booked_appointments]
+    
+    # 3. Calculate AVAILABLE 30-minute slots (9 AM to 9 PM)
+    available_slots = []
+    current_time = dt.datetime.now() # Get current time to avoid offering past slots
+    
+    # Start at 09:00 and end at 21:00 (9 PM)
+    slot_time = dt.datetime.combine(target_date, dt.time(hour=9, minute=0))
+    end_time = dt.datetime.combine(target_date, dt.time(hour=21, minute=0))
+    
+    # Loop through the day in 30-minute chunks
+    while slot_time < end_time:
+        # Check if the slot is NOT booked AND hasn't already passed today
+        if slot_time not in booked_times and slot_time > current_time:
+            # Format nicely as "09:00 AM", "02:30 PM", etc.
+            available_slots.append(slot_time.strftime("%I:%M %p"))
+            
+        # Move forward by 30 minutes
+        slot_time += dt.timedelta(minutes=30)
+            
+    return {
+        "date": target_date.strftime("%Y-%m-%d"),
+        "available_slots": available_slots,
+        "message": f"There are {len(available_slots)} slots available." if available_slots else "No slots available on this date."
+    }
 
 # 4. Serve the Voice Agent HTML Page
 @app.get("/agent")
