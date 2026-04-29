@@ -13,7 +13,11 @@ if DATABASE_URL:
 else:
     print("Database URL is MISSING from environment variables!")
 
-engine = create_engine(DATABASE_URL) 
+engine = create_engine(
+    DATABASE_URL, 
+    pool_pre_ping=True, 
+    pool_recycle=1800
+)
 # , connect_args={"check_same_thread": False}
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
