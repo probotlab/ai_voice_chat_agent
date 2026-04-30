@@ -316,8 +316,8 @@
             }
             userAmp = Math.sqrt(sum / dataArray.length) * 120;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawSineWave(userAmp, "#ff4b2b", 0.6, 1.2); 
-            drawSineWave(agentAmp * 50, "#4CAF50", 0.8, 1.0); 
+            drawSineWave(userAmp *10, "#ff4b2b", 0.6, 1.2); 
+            drawSineWave(agentAmp * 100, "#4CAF50", 0.8, 1.0); 
             phase += 0.15;
         }
 
