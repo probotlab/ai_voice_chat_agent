@@ -164,6 +164,23 @@ def get_available_slots(date: dt.date | None = None, db: Session = Depends(get_d
 def serve_voice_agent():
     # This tells FastAPI to send your agent.html file to the browser
     return FileResponse("agent.html")
+
+@app.get("/latest_activity/")
+def get_latest_activity(db: Session = Depends(get_db)):
+    # Get the most recently created appointment (even if cancelled)
+    query = select(Appointment).order_by(Appointment.id.desc()).limit(1)
+    result = db.execute(query)
+    latest = result.scalars().first()
+    
+    if not latest:
+        return {"name": "-", "status": "-", "reason": "-", "date": "-"}
+    
+    return {
+        "name": latest.patient_name,
+        "status": "CANCELLED" if latest.cancelled else "BOOKED",
+        "reason": latest.reason or "Consultation",
+        "date": latest.start_time.strftime("%b %d, %I:%M %p")
+    }
     
 if __name__ == "__main__":
     # Render sets a 'PORT' env var automatically. If it's not there, use 10000.
