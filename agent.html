@@ -6,7 +6,6 @@
     <title>NexClinic | AI Receptionist</title>
     
     <style>
-        /* --- GLOBAL STYLES --- */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -17,61 +16,56 @@
             font-family: 'Inter', sans-serif;
             background-color: #0f172a; 
             color: #f8fafc;
-            /* 5vw on each side creates a 10% total empty border on desktop */
-            padding: 4vh 5vw; 
-            min-height: 100vh;
+            /* Dynamic padding based on screen height */
+            padding: 2vh 5vw; 
+            height: 100vh; /* Lock to screen height */
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow-x: hidden;
+            overflow: hidden; /* Prevents scrolling on desktop/laptop */
         }
 
         .container {
             width: 100%;
-            max-width: 1150px; /* Increased width for a more commanding desktop presence */
+            max-width: 1100px;
+            height: 95vh; /* Takes up 95% of available vertical space */
             display: flex;
             flex-direction: column;
-            gap: 25px; /* Added more vertical space between sections */
+            justify-content: space-between; /* Spreads items evenly to fill height */
             text-align: center;
-        }
-
-        header {
-            margin-bottom: 5px;
+            gap: 1vh;
         }
 
         h1 {
-            font-size: 2.8rem; /* Larger font for desktop */
+            font-size: clamp(1.5rem, 4vh, 2.5rem); /* Scales font based on height */
             font-weight: 800;
-            letter-spacing: -1.5px;
+            letter-spacing: -1px;
         }
 
         h1 span { color: #4CAF50; }
 
-        p.subtitle {
+        .subtitle {
             color: #94a3b8;
-            font-size: 1.1rem;
-            margin-top: 5px;
+            font-size: clamp(0.8rem, 2vh, 1rem);
+            margin-top: -0.5vh;
         }
 
-        /* --- 1. WAVEFORM (ENLARGED) --- */
+        /* --- 1. WAVEFORM (DYNAMIC HEIGHT) --- */
         #waveform-container {
             width: 100%;
-            height: 280px; /* Increased height for a "bigger" feel */
+            /* This is the key: height is a percentage of screen height */
+            height: 35vh; 
             background: #000000;
-            border-radius: 24px;
-            position: relative;
+            border-radius: 20px;
             border: 1px solid #1e293b;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        canvas {
-            width: 100%;
-            height: 100%;
-        }
+        canvas { width: 100%; height: 100%; }
 
         /* --- 2. CONTROLS --- */
         .controls {
@@ -81,93 +75,72 @@
         }
 
         .btn {
-            padding: 15px 40px;
-            font-size: 1rem;
+            padding: 1.5vh 30px; /* Padding scales with height */
+            font-size: clamp(0.8rem, 1.8vh, 1rem);
             font-weight: 700;
             border: none;
-            border-radius: 60px;
+            border-radius: 50px;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: 0.2s ease;
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        #call-btn {
-            background: #4CAF50;
-            color: white;
-            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.2);
-        }
-
-        #call-btn:hover { 
-            transform: scale(1.05); 
-            background: #45a049; 
-            box-shadow: 0 12px 25px rgba(76, 175, 80, 0.3);
-        }
-
+        #call-btn { background: #4CAF50; color: white; }
         #decline-btn { background: #1e293b; color: #94a3b8; }
         #decline-btn:hover { background: #ef4444; color: white; }
 
-        /* --- 3. STATUS BAR --- */
+        /* --- 3. STATUS --- */
         #status-box {
-            font-size: 0.85rem;
+            font-size: 0.7rem;
             color: #64748b;
-            font-weight: 700;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1.5px;
         }
 
-        /* --- 4. DASHBOARD (ENLARGED) --- */
+        /* --- 4. DASHBOARD (DYNAMIC HEIGHT) --- */
         .dashboard {
             display: flex;
             justify-content: space-between;
-            gap: 20px;
+            gap: 15px;
             width: 100%;
         }
 
         .card {
             flex: 1;
             background: rgba(30, 41, 59, 0.4);
-            padding: 30px 20px; /* Increased vertical padding to make cards taller */
-            border-radius: 20px;
+            /* Padding and height adjust to keep it on one page */
+            padding: 2vh 15px; 
+            border-radius: 16px;
             border: 1px solid #1e293b;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        .card:hover {
-            border-color: #4CAF50;
-            background: rgba(30, 41, 59, 0.6);
-            transform: translateY(-5px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .card-label {
-            font-size: 0.75rem;
+            font-size: 0.65rem;
             color: #94a3b8;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
         }
 
         .card-value {
-            font-size: 2rem; /* Scaled up value numbers */
+            font-size: clamp(1.2rem, 3vh, 1.8rem);
             font-weight: 800;
             color: #ffffff;
         }
 
-        /* --- RESPONSIVE ADJUSTMENTS --- */
-        @media (max-width: 1024px) {
-            .container { max-width: 900px; }
-            #waveform-container { height: 220px; }
-        }
-
+        /* --- MOBILE ADJUSTMENTS --- */
         @media (max-width: 768px) {
-            body { padding: 20px; } 
-            .dashboard { flex-direction: column; gap: 15px; }
-            .controls { flex-direction: column; width: 100%; }
+            body { overflow: auto; height: auto; padding: 20px; }
+            .container { height: auto; gap: 20px; }
+            #waveform-container { height: 200px; }
+            .dashboard { flex-direction: column; }
+            .controls { flex-direction: column; }
             .btn { width: 100%; justify-content: center; }
-            h1 { font-size: 2rem; }
-            #waveform-container { height: 180px; }
         }
     </style>
 </head>
@@ -176,24 +149,20 @@
     <div class="container">
         <header>
             <h1>NexClinic <span>AI</span></h1>
-            <p class="subtitle">Next-Generation Voice Receptionist</p>
+            <p class="subtitle">Next-Gen Voice Receptionist</p>
         </header>
 
-        <!-- Order #1: Waveform -->
         <div id="waveform-container">
             <canvas id="waveform-canvas"></canvas>
         </div>
 
-        <!-- Order #2: Call Controls -->
         <div class="controls">
             <button id="call-btn" class="btn"><span>📞</span> Start Call</button>
             <button id="decline-btn" class="btn"><span>🛑</span> End Connection</button>
         </div>
 
-        <!-- Order #3: Status -->
         <div id="status-box">Status: Disconnected</div>
 
-        <!-- Order #4: Dashboard Stats -->
         <div class="dashboard">
             <div class="card">
                 <div class="card-label">Calls Handled</div>
@@ -230,14 +199,12 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // Increment Animation
         function animateValue(id, start, end, duration, suffix = "") {
             const obj = document.getElementById(id);
             let startTimestamp = null;
             const step = (timestamp) => {
                 if (!startTimestamp) startTimestamp = timestamp;
                 const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                
                 if (id === "stat-time") {
                     const totalSecs = Math.floor(progress * ((56 * 60) + 33));
                     obj.innerHTML = `${Math.floor(totalSecs/60)}m ${totalSecs%60}s${suffix}`;
@@ -255,7 +222,6 @@
             animateValue("stat-apps", 0, 49, 2000, "+");
         });
 
-        // Waveform Logic
         async function startVisualizer() {
             try {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -277,19 +243,16 @@
                 let v = (dataArray[i] - 128) / 128;
                 sum += v * v;
             }
-            userAmp = Math.sqrt(sum / dataArray.length) * 160;
+            userAmp = Math.sqrt(sum / dataArray.length) * 120;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw Waves
-            drawSineWave(userAmp, "#ff4b2b", 0.6, 1.2); // Patient
-            drawSineWave(agentAmp * 50, "#4CAF50", 0.8, 1.0); // AI Agent (Boosted)
-            
+            drawSineWave(userAmp, "#ff4b2b", 0.6, 1.2); 
+            drawSineWave(agentAmp * 50, "#4CAF50", 0.8, 1.0); 
             phase += 0.15;
         }
 
         function drawSineWave(amp, color, opacity, freq) {
             ctx.beginPath();
-            ctx.lineWidth = 4; // Slightly thicker lines for the bigger scale
+            ctx.lineWidth = 3;
             ctx.strokeStyle = color;
             ctx.globalAlpha = opacity;
             for (let x = 0; x < canvas.width; x++) {
@@ -307,19 +270,13 @@
 
         document.getElementById("decline-btn").addEventListener("click", () => { vapi.stop(); });
 
-        vapi.on('call-start', () => { 
-            statusBox.innerText = "Live Connection"; 
-            statusBox.style.color = "#4CAF50"; 
-        });
-
+        vapi.on('call-start', () => { statusBox.innerText = "Live Connection"; statusBox.style.color = "#4CAF50"; });
         vapi.on('call-end', () => { 
             cancelAnimationFrame(animationId);
-            statusBox.innerText = "Disconnected"; 
-            statusBox.style.color = "#64748b";
+            statusBox.innerText = "Disconnected"; statusBox.style.color = "#64748b";
             userAmp = 0; agentAmp = 0;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         });
-
         vapi.on('volume-level', (v) => { agentAmp = v; });
     </script>
 </body>
