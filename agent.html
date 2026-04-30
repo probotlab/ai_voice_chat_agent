@@ -316,8 +316,8 @@
             }
             userAmp = Math.sqrt(sum / dataArray.length) * 120;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawSineWave(userAmp *10, "#ff4b2b", 0.6, 1.2); 
-            drawSineWave(agentAmp * 100, "#4CAF50", 0.8, 1.0); 
+            drawSineWave(userAmp, "#ff4b2b", 0.6, 1.2); 
+            drawSineWave(agentAmp * 30, "#4CAF50", 0.8, 1.0); 
             phase += 0.15;
         }
 
@@ -351,29 +351,38 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         });
 
-        // CRITICAL: Listen for tool calls to trigger the Summary Table
-        // --- This fix ensures the Green Bar works (Volume) ---
-        vapi.on('volume-level', (v) => {
-            agentAmp = v; 
-        });
-
-        // --- This handles the Activity Table (Tool Calls) ---
         vapi.on('message', (message) => {
-            if (message.type === 'tool-calls' || message.type === 'tool-call-result') {
-                const toolCall = (message.toolCalls && message.toolCalls[0]) || message.toolCall;
-                if (!toolCall) return;
+            // 1. Debug: This will show every message in your browser console (F12)
+            console.log("Vapi Message Received:", message);
 
-                const funcName = toolCall.function?.name;
-                const args = JSON.parse(toolCall.function?.arguments || "{}");
+            // 2. Check for tool calls
+            if (message.type === 'tool-calls' || message.type === 'tool-call-result') {
+                
+                // Vapi sometimes puts the tool info in different places, let's grab it wherever it is
+                const toolCall = (message.toolCalls && message.toolCalls[0]) || 
+                                 (message.toolCallList && message.toolCallList[0]) || 
+                                 message.toolCall;
+                
+                if (!toolCall || !toolCall.function) return;
+
+                const funcName = toolCall.function.name;
+                const args = typeof toolCall.function.arguments === 'string' 
+                             ? JSON.parse(toolCall.function.arguments) 
+                             : toolCall.function.arguments;
+
+                console.log("AI is executing function:", funcName, "with args:", args);
 
                 if (funcName === 'schedule_appointment') {
-                    const formattedDate = new Date(args.start_time).toLocaleString([], {
+                    const dateObj = new Date(args.start_time);
+                    const formattedDate = isNaN(dateObj) ? args.start_time : dateObj.toLocaleString([], {
                         month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                     });
                     window.showSummary(args.patient_name, "BOOKED", args.reason, formattedDate);
                 } 
                 else if (funcName === 'cancel_appointment') {
-                    window.showSummary(args.patient_name, "CANCELLED", "Requested", args.date);
+                    // Try to use a formatted date if provided, otherwise use raw input
+                    const displayDate = args.date || "Today";
+                    window.showSummary(args.patient_name, "CANCELLED", "User Request", displayDate);
                 }
             }
         });
