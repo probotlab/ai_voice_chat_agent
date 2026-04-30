@@ -17,7 +17,7 @@
             font-family: 'Inter', sans-serif;
             background-color: #0f172a; 
             color: #f8fafc;
-            /* Creates the "empty borders" effect (approx 20% total) */
+            /* 5vw on each side creates a 10% total empty border on desktop */
             padding: 4vh 5vw; 
             min-height: 100vh;
             display: flex;
@@ -28,36 +28,40 @@
 
         .container {
             width: 100%;
-            max-width: 900px;
+            max-width: 1150px; /* Increased width for a more commanding desktop presence */
             display: flex;
             flex-direction: column;
-            gap: 15px; /* Tightened spacing to fit screen */
+            gap: 25px; /* Added more vertical space between sections */
             text-align: center;
         }
 
+        header {
+            margin-bottom: 5px;
+        }
+
         h1 {
-            font-size: 2rem; /* Scaled down slightly */
-            font-weight: 700;
-            letter-spacing: -1px;
+            font-size: 2.8rem; /* Larger font for desktop */
+            font-weight: 800;
+            letter-spacing: -1.5px;
         }
 
         h1 span { color: #4CAF50; }
 
         p.subtitle {
             color: #94a3b8;
-            font-size: 0.95rem;
-            margin-top: -10px;
+            font-size: 1.1rem;
+            margin-top: 5px;
         }
 
-        /* --- THE WAVEFORM (MADE SMALLER) --- */
+        /* --- 1. WAVEFORM (ENLARGED) --- */
         #waveform-container {
             width: 100%;
-            height: 180px; /* Reduced from 250px to save space */
+            height: 280px; /* Increased height for a "bigger" feel */
             background: #000000;
-            border-radius: 20px;
+            border-radius: 24px;
             position: relative;
             border: 1px solid #1e293b;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
             overflow: hidden;
             display: flex;
             align-items: center;
@@ -69,84 +73,101 @@
             height: 100%;
         }
 
-        /* --- CONTROLS --- */
+        /* --- 2. CONTROLS --- */
         .controls {
             display: flex;
-            gap: 12px;
+            gap: 15px;
             justify-content: center;
         }
 
         .btn {
-            padding: 12px 28px;
-            font-size: 0.9rem;
-            font-weight: 600;
+            padding: 15px 40px;
+            font-size: 1rem;
+            font-weight: 700;
             border: none;
-            border-radius: 50px;
+            border-radius: 60px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
 
         #call-btn {
             background: #4CAF50;
             color: white;
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.2);
+            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.2);
         }
 
-        #call-btn:hover { transform: translateY(-2px); background: #45a049; }
+        #call-btn:hover { 
+            transform: scale(1.05); 
+            background: #45a049; 
+            box-shadow: 0 12px 25px rgba(76, 175, 80, 0.3);
+        }
 
         #decline-btn { background: #1e293b; color: #94a3b8; }
         #decline-btn:hover { background: #ef4444; color: white; }
 
-        /* --- STATUS BAR --- */
+        /* --- 3. STATUS BAR --- */
         #status-box {
-            font-size: 0.75rem;
+            font-size: 0.85rem;
             color: #64748b;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin: 5px 0;
+            letter-spacing: 2px;
         }
 
-        /* --- DASHBOARD (NOW AT THE BOTTOM) --- */
+        /* --- 4. DASHBOARD (ENLARGED) --- */
         .dashboard {
             display: flex;
             justify-content: space-between;
-            gap: 15px;
+            gap: 20px;
             width: 100%;
         }
 
         .card {
             flex: 1;
             background: rgba(30, 41, 59, 0.4);
-            padding: 15px; /* Smaller padding */
-            border-radius: 16px;
+            padding: 30px 20px; /* Increased vertical padding to make cards taller */
+            border-radius: 20px;
             border: 1px solid #1e293b;
             transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .card:hover {
+            border-color: #4CAF50;
+            background: rgba(30, 41, 59, 0.6);
+            transform: translateY(-5px);
         }
 
         .card-label {
-            font-size: 0.65rem;
+            font-size: 0.75rem;
             color: #94a3b8;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
         }
 
         .card-value {
-            font-size: 1.4rem;
-            font-weight: 700;
+            font-size: 2rem; /* Scaled up value numbers */
+            font-weight: 800;
             color: #ffffff;
         }
 
-        /* --- RESPONSIVE --- */
+        /* --- RESPONSIVE ADJUSTMENTS --- */
+        @media (max-width: 1024px) {
+            .container { max-width: 900px; }
+            #waveform-container { height: 220px; }
+        }
+
         @media (max-width: 768px) {
-            body { padding: 20px; } /* Remove 20% border on small mobiles */
-            .dashboard { flex-direction: column; }
+            body { padding: 20px; } 
+            .dashboard { flex-direction: column; gap: 15px; }
             .controls { flex-direction: column; width: 100%; }
             .btn { width: 100%; justify-content: center; }
+            h1 { font-size: 2rem; }
+            #waveform-container { height: 180px; }
         }
     </style>
 </head>
@@ -158,21 +179,21 @@
             <p class="subtitle">Next-Generation Voice Receptionist</p>
         </header>
 
-        <!-- 1. Waveform -->
+        <!-- Order #1: Waveform -->
         <div id="waveform-container">
             <canvas id="waveform-canvas"></canvas>
         </div>
 
-        <!-- 2. Call Controls -->
+        <!-- Order #2: Call Controls -->
         <div class="controls">
             <button id="call-btn" class="btn"><span>📞</span> Start Call</button>
             <button id="decline-btn" class="btn"><span>🛑</span> End Connection</button>
         </div>
 
-        <!-- 3. Status Bar -->
+        <!-- Order #3: Status -->
         <div id="status-box">Status: Disconnected</div>
 
-        <!-- 4. Dashboard Stats (Bottom) -->
+        <!-- Order #4: Dashboard Stats -->
         <div class="dashboard">
             <div class="card">
                 <div class="card-label">Calls Handled</div>
@@ -209,7 +230,7 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // --- DASHBOARD ANIMATION ---
+        // Increment Animation
         function animateValue(id, start, end, duration, suffix = "") {
             const obj = document.getElementById(id);
             let startTimestamp = null;
@@ -218,10 +239,8 @@
                 const progress = Math.min((timestamp - startTimestamp) / duration, 1);
                 
                 if (id === "stat-time") {
-                    const currentTotalSecs = Math.floor(progress * ((56 * 60) + 33));
-                    const mins = Math.floor(currentTotalSecs / 60);
-                    const secs = currentTotalSecs % 60;
-                    obj.innerHTML = `${mins}m ${secs}s${suffix}`;
+                    const totalSecs = Math.floor(progress * ((56 * 60) + 33));
+                    obj.innerHTML = `${Math.floor(totalSecs/60)}m ${totalSecs%60}s${suffix}`;
                 } else {
                     obj.innerHTML = Math.floor(progress * (end - start) + start) + suffix;
                 }
@@ -236,7 +255,7 @@
             animateValue("stat-apps", 0, 49, 2000, "+");
         });
 
-        // --- WAVEFORM ENGINE ---
+        // Waveform Logic
         async function startVisualizer() {
             try {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -258,16 +277,19 @@
                 let v = (dataArray[i] - 128) / 128;
                 sum += v * v;
             }
-            userAmp = Math.sqrt(sum / dataArray.length) * 150;
+            userAmp = Math.sqrt(sum / dataArray.length) * 160;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawSineWave(userAmp, "#ff4b2b", 0.6, 1.2); 
-            drawSineWave(agentAmp * 50, "#4CAF50", 0.8, 1.0); 
+            
+            // Draw Waves
+            drawSineWave(userAmp, "#ff4b2b", 0.6, 1.2); // Patient
+            drawSineWave(agentAmp * 50, "#4CAF50", 0.8, 1.0); // AI Agent (Boosted)
+            
             phase += 0.15;
         }
 
         function drawSineWave(amp, color, opacity, freq) {
             ctx.beginPath();
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 4; // Slightly thicker lines for the bigger scale
             ctx.strokeStyle = color;
             ctx.globalAlpha = opacity;
             for (let x = 0; x < canvas.width; x++) {
@@ -278,7 +300,6 @@
             ctx.stroke();
         }
 
-        // --- EVENTS ---
         document.getElementById("call-btn").addEventListener("click", () => {
             vapi.start(assistantId);
             startVisualizer();
@@ -286,13 +307,19 @@
 
         document.getElementById("decline-btn").addEventListener("click", () => { vapi.stop(); });
 
-        vapi.on('call-start', () => { statusBox.innerText = "Live Connection"; statusBox.style.color = "#4CAF50"; });
+        vapi.on('call-start', () => { 
+            statusBox.innerText = "Live Connection"; 
+            statusBox.style.color = "#4CAF50"; 
+        });
+
         vapi.on('call-end', () => { 
             cancelAnimationFrame(animationId);
-            statusBox.innerText = "Disconnected"; statusBox.style.color = "#64748b";
+            statusBox.innerText = "Disconnected"; 
+            statusBox.style.color = "#64748b";
             userAmp = 0; agentAmp = 0;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         });
+
         vapi.on('volume-level', (v) => { agentAmp = v; });
     </script>
 </body>
