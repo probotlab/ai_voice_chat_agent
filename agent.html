@@ -18,7 +18,7 @@
             background-color: #0f172a; 
             color: #f8fafc;
             /* Creates the "empty borders" effect (approx 20% total) */
-            padding: 5vh 10vw; 
+            padding: 4vh 5vw; 
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -260,7 +260,7 @@
             }
             userAmp = Math.sqrt(sum / dataArray.length) * 150;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawSineWave(userAmp *50, "#ff4b2b", 0.6, 1.2); 
+            drawSineWave(userAmp, "#ff4b2b", 0.6, 1.2); 
             drawSineWave(agentAmp * 50, "#4CAF50", 0.8, 1.0); 
             phase += 0.15;
         }
