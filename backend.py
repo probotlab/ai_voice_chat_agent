@@ -166,10 +166,20 @@ def serve_voice_agent():
     return FileResponse("agent.html")
 
 @app.get("/latest_activity/")
-def get_latest_activity(db: Session = Depends(get_db)):
-    # Get the most recently created appointment (even if cancelled)
-    query = select(Appointment).order_by(Appointment.id.desc()).limit(1)
-    result = db.execute(query)
+def get_latest_activity(since: str = None, db: Session = Depends(get_db)):
+    # Base query: get the most recent entry
+    query = select(Appointment).order_by(Appointment.id.desc())
+    
+    # If a 'since' timestamp is provided, filter for records created after it
+    if since:
+        try:
+            # Parse the ISO timestamp from the frontend
+            since_dt = dt.datetime.fromisoformat(since.replace("Z", "+00:00"))
+            query = query.where(Appointment.created_at >= since_dt)
+        except Exception:
+            pass 
+            
+    result = db.execute(query.limit(1))
     latest = result.scalars().first()
     
     if not latest:
