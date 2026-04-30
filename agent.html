@@ -358,30 +358,37 @@
 
         // --- 2. THE SUMMARY TABLE FIX (TOOL CALLS) ---
         vapi.on('message', (message) => {
-            console.log("New Message:", message.type, message); // Check your console (F12)
+            // 1. Logs everything so we can see what the AI is thinking
+            if (message.type === 'tool-calls' || message.type === 'tool-call-result' || message.type === 'function-call') {
+                console.log("TOOL DATA RECEIVED:", message);
 
-            // We listen for tool-calls (when AI starts the action) 
-            // or tool-call-result (when the action is finished)
-            if (message.type === 'tool-calls' || message.type === 'tool-call-result') {
+                // 2. Extract the tool data (Vapi can send this in 3 different formats)
                 const toolCall = (message.toolCalls && message.toolCalls[0]) || 
                                  (message.toolCallList && message.toolCallList[0]) || 
-                                 message.toolCall;
+                                 message.toolCall ||
+                                 message.functionCall; // Support for older Vapi versions
 
                 if (!toolCall) return;
 
+                // 3. Get the name and arguments
                 const funcName = toolCall.function?.name || toolCall.name;
                 const args = typeof toolCall.function?.arguments === 'string' 
                              ? JSON.parse(toolCall.function.arguments) 
-                             : (toolCall.function?.arguments || toolCall.arguments);
+                             : (toolCall.function?.arguments || toolCall.arguments || {});
 
-                if (funcName === 'schedule_appointment') {
+                console.log("Detected Function:", funcName);
+
+                // 4. Trigger the UI based on the function name
+                // IMPORTANT: Check your Vapi Dashboard. These names must match EXACTLY.
+                if (funcName === 'schedule_appointment' || funcName === 'book_appointment') {
                     const dateStr = args.start_time ? new Date(args.start_time).toLocaleString([], {
                         month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                    }) : "Scheduled";
-                    window.showSummary(args.patient_name, "BOOKED", args.reason, dateStr);
+                    }) : "Confirmed";
+                    
+                    window.showSummary(args.patient_name || "Patient", "BOOKED", args.reason || "Consultation", dateStr);
                 } 
                 else if (funcName === 'cancel_appointment') {
-                    window.showSummary(args.patient_name, "CANCELLED", "User Request", args.date || "Today");
+                    window.showSummary(args.patient_name || "Patient", "CANCELLED", "User Request", args.date || "Today");
                 }
             }
         });
