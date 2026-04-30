@@ -316,7 +316,7 @@
             }
             userAmp = Math.sqrt(sum / dataArray.length) * 120;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawSineWave(userAmp, "#ff4b2b", 0.6, 1.2); 
+            drawSineWave(userAmp *7, "#ff4b2b", 0.6, 1.2); 
             drawSineWave(agentAmp * 30, "#4CAF50", 0.8, 1.0); 
             phase += 0.15;
         }
@@ -351,40 +351,55 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         });
 
-        vapi.on('message', (message) => {
-            // 1. Debug: This will show every message in your browser console (F12)
-            console.log("Vapi Message Received:", message);
+        // --- 1. THE GREEN BAR FIX (VOLUME) ---
+        vapi.on('volume-level', (v) => {
+            agentAmp = v; 
+        });
 
-            // 2. Check for tool calls
+        // --- 2. THE SUMMARY TABLE FIX (TOOL CALLS) ---
+        vapi.on('message', (message) => {
+            console.log("New Message:", message.type, message); // Check your console (F12)
+
+            // We listen for tool-calls (when AI starts the action) 
+            // or tool-call-result (when the action is finished)
             if (message.type === 'tool-calls' || message.type === 'tool-call-result') {
-                
-                // Vapi sometimes puts the tool info in different places, let's grab it wherever it is
                 const toolCall = (message.toolCalls && message.toolCalls[0]) || 
                                  (message.toolCallList && message.toolCallList[0]) || 
                                  message.toolCall;
-                
-                if (!toolCall || !toolCall.function) return;
 
-                const funcName = toolCall.function.name;
-                const args = typeof toolCall.function.arguments === 'string' 
+                if (!toolCall) return;
+
+                const funcName = toolCall.function?.name || toolCall.name;
+                const args = typeof toolCall.function?.arguments === 'string' 
                              ? JSON.parse(toolCall.function.arguments) 
-                             : toolCall.function.arguments;
-
-                console.log("AI is executing function:", funcName, "with args:", args);
+                             : (toolCall.function?.arguments || toolCall.arguments);
 
                 if (funcName === 'schedule_appointment') {
-                    const dateObj = new Date(args.start_time);
-                    const formattedDate = isNaN(dateObj) ? args.start_time : dateObj.toLocaleString([], {
+                    const dateStr = args.start_time ? new Date(args.start_time).toLocaleString([], {
                         month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                    });
-                    window.showSummary(args.patient_name, "BOOKED", args.reason, formattedDate);
+                    }) : "Scheduled";
+                    window.showSummary(args.patient_name, "BOOKED", args.reason, dateStr);
                 } 
                 else if (funcName === 'cancel_appointment') {
-                    // Try to use a formatted date if provided, otherwise use raw input
-                    const displayDate = args.date || "Today";
-                    window.showSummary(args.patient_name, "CANCELLED", "User Request", displayDate);
+                    window.showSummary(args.patient_name, "CANCELLED", "User Request", args.date || "Today");
                 }
             }
+        });
+
+        // --- 3. CALL MANAGEMENT ---
+        vapi.on('call-start', () => { 
+            statusBox.innerText = "Live Connection"; 
+            statusBox.style.color = "#4CAF50"; 
+        });
+
+        vapi.on('call-end', () => { 
+            cancelAnimationFrame(animationId);
+            statusBox.innerText = "Disconnected"; 
+            statusBox.style.color = "#64748b";
+            userAmp = 0; agentAmp = 0;
+            // Hide the table when call ends so it's fresh for next time
+            document.getElementById('summary-section').classList.remove('visible');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
         });
     </script>
 </body>
