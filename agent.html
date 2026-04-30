@@ -17,7 +17,7 @@
             font-family: 'Inter', sans-serif;
             background-color: #0f172a; 
             color: #f8fafc;
-            padding: 4vh 5vw; /* 10% total side margin */
+            padding: 2vh 5vw; /* 10% total side margin */
             height: 100vh;
             display: flex;
             align-items: center;
@@ -28,11 +28,11 @@
         .container {
             width: 100%;
             max-width: 1100px;
-            height: auto; /* Tight fit */
+            height: 98vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            gap: 20px; /* Tight vertical spacing */
+            gap: 20px;
             text-align: center;
         }
 
@@ -48,7 +48,7 @@
         .subtitle {
             color: #94a3b8;
             font-size: clamp(0.8rem, 2vh, 0.95rem);
-            margin-bottom: 5px;
+            margin-bottom: 2px;
         }
 
         /* --- 1. WAVEFORM --- */
@@ -100,22 +100,14 @@
             letter-spacing: 1.5px;
         }
 
-        /* --- 4. ACTIVITY SUMMARY (FADES IN ON TOOL CALL) --- */
+        /* --- 4. ACTIVITY SUMMARY (PERMANENT) --- */
         #summary-section {
-            max-height: 0;
-            opacity: 0;
-            overflow: hidden;
-            transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        #summary-section.visible {
-            max-height: 200px;
-            opacity: 1;
-            margin: 10px 0;
+            width: 100%;
+            margin: 5px 0;
         }
 
         .summary-header {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: #4CAF50;
             text-transform: uppercase;
             letter-spacing: 2px;
@@ -124,14 +116,13 @@
         }
 
         .summary-table {
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid rgba(76, 175, 80, 0.4);
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid #1e293b;
             border-radius: 12px;
-            padding: 18px;
+            padding: 15px;
             display: flex;
             justify-content: space-around;
-            gap: 15px;
-            box-shadow: 0 0 15px rgba(76, 175, 80, 0.1);
+            gap: 10px;
         }
 
         .summary-cell span {
@@ -139,7 +130,7 @@
             font-size: 0.6rem;
             color: #94a3b8;
             text-transform: uppercase;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
         }
 
         .summary-cell div {
@@ -180,6 +171,7 @@
             color: #ffffff;
         }
 
+        /* --- RESPONSIVE --- */
         @media (max-width: 768px) {
             body { overflow: auto; height: auto; padding: 20px; }
             .container { height: auto; gap: 15px; }
@@ -202,15 +194,15 @@
         </div>
 
         <div class="controls">
-            <button id="call-btn" class="btn"><span>📞</span> Call</button>
-            <button id="decline-btn" class="btn"><span>🛑</span> Decline</button>
+            <button id="call-btn" class="btn"><span>📞</span> Start Call</button>
+            <button id="decline-btn" class="btn"><span>🛑</span> End Connection</button>
         </div>
 
         <div id="status-box">Status: Disconnected</div>
 
-        <!-- Dynamic Activity Table -->
+        <!-- Activity Table (Always Present) -->
         <div id="summary-section">
-            <div class="summary-header" id="summary-title">Booking/Cancellation Details</div>
+            <div class="summary-header">Latest Database Activity</div>
             <div class="summary-table">
                 <div class="summary-cell"><span>Patient</span><div id="sum-name">-</div></div>
                 <div class="summary-cell"><span>Action</span><div id="sum-status">-</div></div>
@@ -255,20 +247,34 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // UI TRIGGER: This is called automatically when the AI takes action
-        window.showSummary = function(name, status, reason, date) {
-            const section = document.getElementById('summary-section');
-            document.getElementById('sum-name').innerText = name;
-            const st = document.getElementById('sum-status');
-            st.innerText = status;
-            st.className = status.includes('BOOKED') ? 'status-booked' : 'status-cancelled';
-            document.getElementById('sum-reason').innerText = reason || "General Visit";
-            document.getElementById('sum-date').innerText = date;
-            
-            section.classList.add('visible');
-        };
+        // --- DATABASE POLLING LOGIC ---
+        async function fetchLatestActivity() {
+            try {
+                // IMPORTANT: Ensure your backend.py has the /latest_activity/ endpoint
+                const response = await fetch('/latest_activity/');
+                const data = await response.json();
 
-        // Numbers Animation
+                const nameEl = document.getElementById('sum-name');
+                const statusEl = document.getElementById('sum-status');
+                const reasonEl = document.getElementById('sum-reason');
+                const dateEl = document.getElementById('sum-date');
+
+                // Update only if data changed
+                if (nameEl.innerText !== data.name) {
+                    nameEl.innerText = data.name;
+                    statusEl.innerText = data.status;
+                    statusEl.className = data.status === "BOOKED" ? 'status-booked' : 'status-cancelled';
+                    reasonEl.innerText = data.reason;
+                    dateEl.innerText = data.date;
+                }
+            } catch (err) {
+                console.log("DB sync...");
+            }
+        }
+        // Check DB every 2 seconds
+        setInterval(fetchLatestActivity, 1000);
+
+        // Stats Animation
         function animateValue(id, start, end, duration, suffix = "") {
             const obj = document.getElementById(id);
             let startTimestamp = null;
@@ -316,7 +322,7 @@
             }
             userAmp = Math.sqrt(sum / dataArray.length) * 120;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawSineWave(userAmp *7, "#ff4b2b", 0.6, 1.2); 
+            drawSineWave(userAmp *3, "#ff4b2b", 0.6, 1.2); 
             drawSineWave(agentAmp * 30, "#4CAF50", 0.8, 1.0); 
             phase += 0.15;
         }
@@ -342,72 +348,13 @@
         document.getElementById("decline-btn").addEventListener("click", () => { vapi.stop(); });
 
         vapi.on('call-start', () => { statusBox.innerText = "Live Connection"; statusBox.style.color = "#4CAF50"; });
-        
         vapi.on('call-end', () => { 
             cancelAnimationFrame(animationId);
             statusBox.innerText = "Disconnected"; statusBox.style.color = "#64748b";
             userAmp = 0; agentAmp = 0;
-            document.getElementById('summary-section').classList.remove('visible');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         });
-
-        // --- 1. THE GREEN BAR FIX (VOLUME) ---
-        vapi.on('volume-level', (v) => {
-            agentAmp = v; 
-        });
-
-        // --- 2. THE SUMMARY TABLE FIX (TOOL CALLS) ---
-        vapi.on('message', (message) => {
-            // 1. Logs everything so we can see what the AI is thinking
-            if (message.type === 'tool-calls' || message.type === 'tool-call-result' || message.type === 'function-call') {
-                console.log("TOOL DATA RECEIVED:", message);
-
-                // 2. Extract the tool data (Vapi can send this in 3 different formats)
-                const toolCall = (message.toolCalls && message.toolCalls[0]) || 
-                                 (message.toolCallList && message.toolCallList[0]) || 
-                                 message.toolCall ||
-                                 message.functionCall; // Support for older Vapi versions
-
-                if (!toolCall) return;
-
-                // 3. Get the name and arguments
-                const funcName = toolCall.function?.name || toolCall.name;
-                const args = typeof toolCall.function?.arguments === 'string' 
-                             ? JSON.parse(toolCall.function.arguments) 
-                             : (toolCall.function?.arguments || toolCall.arguments || {});
-
-                console.log("Detected Function:", funcName);
-
-                // 4. Trigger the UI based on the function name
-                // IMPORTANT: Check your Vapi Dashboard. These names must match EXACTLY.
-                if (funcName === 'schedule_appointment' || funcName === 'book_appointment') {
-                    const dateStr = args.start_time ? new Date(args.start_time).toLocaleString([], {
-                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                    }) : "Confirmed";
-                    
-                    window.showSummary(args.patient_name || "Patient", "BOOKED", args.reason || "Consultation", dateStr);
-                } 
-                else if (funcName === 'cancel_appointment') {
-                    window.showSummary(args.patient_name || "Patient", "CANCELLED", "User Request", args.date || "Today");
-                }
-            }
-        });
-
-        // --- 3. CALL MANAGEMENT ---
-        vapi.on('call-start', () => { 
-            statusBox.innerText = "Live Connection"; 
-            statusBox.style.color = "#4CAF50"; 
-        });
-
-        vapi.on('call-end', () => { 
-            cancelAnimationFrame(animationId);
-            statusBox.innerText = "Disconnected"; 
-            statusBox.style.color = "#64748b";
-            userAmp = 0; agentAmp = 0;
-            // Hide the table when call ends so it's fresh for next time
-            document.getElementById('summary-section').classList.remove('visible');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        });
+        vapi.on('volume-level', (v) => { agentAmp = v; });
     </script>
 </body>
 </html>
