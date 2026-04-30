@@ -352,12 +352,13 @@
         });
 
         // CRITICAL: Listen for tool calls to trigger the Summary Table
-        vapi.on('message', (message) => {
-            if (message.type === 'volume-level') {
-                agentAmp = message.volume;
-            }
+        // --- This fix ensures the Green Bar works (Volume) ---
+        vapi.on('volume-level', (v) => {
+            agentAmp = v; 
+        });
 
-            // Detect when AI initiates a booking or cancellation
+        // --- This handles the Activity Table (Tool Calls) ---
+        vapi.on('message', (message) => {
             if (message.type === 'tool-calls' || message.type === 'tool-call-result') {
                 const toolCall = (message.toolCalls && message.toolCalls[0]) || message.toolCall;
                 if (!toolCall) return;
