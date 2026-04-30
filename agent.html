@@ -25,7 +25,7 @@
             overflow: hidden; /* Prevents scrolling on desktop/laptop */
         }
 
-        .container {
+        /* .container {
             width: 100%;
             max-width: 1100px;
             height: 95vh; /* Takes up 95% of available vertical space */
@@ -34,6 +34,17 @@
             justify-content: space-between; /* Spreads items evenly to fill height */
             text-align: center;
             gap: 1vh;
+        } */
+        
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            height: auto; /* Change from 95vh to auto so it doesn't force height */
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* This pulls everything to the middle */
+            gap: 10px;               /* This is the physical distance between elements */
+            text-align: center;
         }
 
         h1 {
@@ -56,7 +67,7 @@
             /* This is the key: height is a percentage of screen height */
             height: 20vh; 
             background: #000000;
-            border-radius: 7px;
+            border-radius: 20px;
             border: 1px solid #1e293b;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
             overflow: hidden;
