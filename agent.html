@@ -6,6 +6,7 @@
     <title>NexClinic | AI Receptionist</title>
     
     <style>
+        /* --- GLOBAL STYLES --- */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -16,49 +17,48 @@
             font-family: 'Inter', sans-serif;
             background-color: #0f172a; 
             color: #f8fafc;
-            /* Dynamic padding based on screen height */
-            padding: 2vh 5vw; 
-            height: 100vh; /* Lock to screen height */
+            padding: 4vh 5vw; /* 10% total side margin */
+            height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden; /* Prevents scrolling on desktop/laptop */
+            overflow: hidden; 
         }
-        
+
         .container {
             width: 100%;
             max-width: 1100px;
-            height: auto; /* Change from 95vh to auto so it doesn't force height */
+            height: auto; /* Tight fit */
             display: flex;
             flex-direction: column;
-            justify-content: center; /* This pulls everything to the middle */
-            gap: 20px;               /* This is the physical distance between elements */
+            justify-content: center;
+            gap: 20px; /* Tight vertical spacing */
             text-align: center;
         }
 
         h1 {
-            font-size: clamp(1.5rem, 4vh, 2.5rem); /* Scales font based on height */
+            font-size: clamp(1.5rem, 4vh, 2.2rem);
             font-weight: 800;
             letter-spacing: -1px;
+            margin: 0;
         }
 
         h1 span { color: #4CAF50; }
 
         .subtitle {
             color: #94a3b8;
-            font-size: clamp(0.8rem, 2vh, 1rem);
-            margin-top: -0.5vh;
+            font-size: clamp(0.8rem, 2vh, 0.95rem);
+            margin-bottom: 5px;
         }
 
-        /* --- 1. WAVEFORM (DYNAMIC HEIGHT) --- */
+        /* --- 1. WAVEFORM --- */
         #waveform-container {
             width: 100%;
-            /* This is the key: height is a percentage of screen height */
-            height: 20vh; 
+            height: 18vh; 
             background: #000000;
-            border-radius: 20px;
+            border-radius: 7px;
             border: 1px solid #1e293b;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             overflow: hidden;
             display: flex;
             align-items: center;
@@ -70,13 +70,13 @@
         /* --- 2. CONTROLS --- */
         .controls {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             justify-content: center;
         }
 
         .btn {
-            padding: 1.5vh 30px; /* Padding scales with height */
-            font-size: clamp(0.8rem, 1.8vh, 1rem);
+            padding: 10px 25px;
+            font-size: 0.9rem;
             font-weight: 700;
             border: none;
             border-radius: 50px;
@@ -84,7 +84,7 @@
             transition: 0.2s ease;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         #call-btn { background: #4CAF50; color: white; }
@@ -100,45 +100,90 @@
             letter-spacing: 1.5px;
         }
 
-        /* --- 4. DASHBOARD (DYNAMIC HEIGHT) --- */
+        /* --- 4. ACTIVITY SUMMARY (FADES IN ON TOOL CALL) --- */
+        #summary-section {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #summary-section.visible {
+            max-height: 200px;
+            opacity: 1;
+            margin: 10px 0;
+        }
+
+        .summary-header {
+            font-size: 0.75rem;
+            color: #4CAF50;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            font-weight: 800;
+        }
+
+        .summary-table {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(76, 175, 80, 0.4);
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            justify-content: space-around;
+            gap: 15px;
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.1);
+        }
+
+        .summary-cell span {
+            display: block;
+            font-size: 0.6rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .summary-cell div {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .status-booked { color: #4CAF50 !important; }
+        .status-cancelled { color: #ef4444 !important; }
+
+        /* --- 5. DASHBOARD STATS --- */
         .dashboard {
             display: flex;
             justify-content: space-between;
-            gap: 15px;
+            gap: 12px;
             width: 100%;
         }
 
         .card {
             flex: 1;
-            background: rgba(30, 41, 59, 0.4);
-            /* Padding and height adjust to keep it on one page */
-            padding: 2vh 15px; 
-            border-radius: 16px;
+            background: rgba(30, 41, 59, 0.3);
+            padding: 1.5vh 10px;
+            border-radius: 12px;
             border: 1px solid #1e293b;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
         }
 
         .card-label {
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             color: #94a3b8;
             text-transform: uppercase;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
 
         .card-value {
-            font-size: clamp(1.2rem, 3vh, 1.8rem);
+            font-size: clamp(1rem, 2.5vh, 1.4rem);
             font-weight: 800;
             color: #ffffff;
         }
 
-        /* --- MOBILE ADJUSTMENTS --- */
         @media (max-width: 768px) {
             body { overflow: auto; height: auto; padding: 20px; }
-            .container { height: auto; gap: 20px; }
-            #waveform-container { height: 200px; }
-            .dashboard { flex-direction: column; }
+            .container { height: auto; gap: 15px; }
+            .dashboard, .summary-table { flex-direction: column; }
             .controls { flex-direction: column; }
             .btn { width: 100%; justify-content: center; }
         }
@@ -162,6 +207,17 @@
         </div>
 
         <div id="status-box">Status: Disconnected</div>
+
+        <!-- Dynamic Activity Table -->
+        <div id="summary-section">
+            <div class="summary-header" id="summary-title">Booking/Cancellation Details</div>
+            <div class="summary-table">
+                <div class="summary-cell"><span>Patient</span><div id="sum-name">-</div></div>
+                <div class="summary-cell"><span>Action</span><div id="sum-status">-</div></div>
+                <div class="summary-cell"><span>Reason</span><div id="sum-reason">-</div></div>
+                <div class="summary-cell"><span>Schedule</span><div id="sum-date">-</div></div>
+            </div>
+        </div>
 
         <div class="dashboard">
             <div class="card">
@@ -199,6 +255,20 @@
         window.addEventListener('resize', resize);
         resize();
 
+        // UI TRIGGER: This is called automatically when the AI takes action
+        window.showSummary = function(name, status, reason, date) {
+            const section = document.getElementById('summary-section');
+            document.getElementById('sum-name').innerText = name;
+            const st = document.getElementById('sum-status');
+            st.innerText = status;
+            st.className = status.includes('BOOKED') ? 'status-booked' : 'status-cancelled';
+            document.getElementById('sum-reason').innerText = reason || "General Visit";
+            document.getElementById('sum-date').innerText = date;
+            
+            section.classList.add('visible');
+        };
+
+        // Numbers Animation
         function animateValue(id, start, end, duration, suffix = "") {
             const obj = document.getElementById(id);
             let startTimestamp = null;
@@ -206,8 +276,8 @@
                 if (!startTimestamp) startTimestamp = timestamp;
                 const progress = Math.min((timestamp - startTimestamp) / duration, 1);
                 if (id === "stat-time") {
-                    const totalSecs = Math.floor(progress * ((56 * 60) + 33));
-                    obj.innerHTML = `${Math.floor(totalSecs/60)}m ${totalSecs%60}s${suffix}`;
+                    const secs = Math.floor(progress * ((56 * 60) + 33));
+                    obj.innerHTML = `${Math.floor(secs/60)}m ${secs%60}s${suffix}`;
                 } else {
                     obj.innerHTML = Math.floor(progress * (end - start) + start) + suffix;
                 }
@@ -222,6 +292,7 @@
             animateValue("stat-apps", 0, 49, 2000, "+");
         });
 
+        // Waveform Logic
         async function startVisualizer() {
             try {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -271,13 +342,40 @@
         document.getElementById("decline-btn").addEventListener("click", () => { vapi.stop(); });
 
         vapi.on('call-start', () => { statusBox.innerText = "Live Connection"; statusBox.style.color = "#4CAF50"; });
+        
         vapi.on('call-end', () => { 
             cancelAnimationFrame(animationId);
             statusBox.innerText = "Disconnected"; statusBox.style.color = "#64748b";
             userAmp = 0; agentAmp = 0;
+            document.getElementById('summary-section').classList.remove('visible');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         });
-        vapi.on('volume-level', (v) => { agentAmp = v; });
+
+        // CRITICAL: Listen for tool calls to trigger the Summary Table
+        vapi.on('message', (message) => {
+            if (message.type === 'volume-level') {
+                agentAmp = message.volume;
+            }
+
+            // Detect when AI initiates a booking or cancellation
+            if (message.type === 'tool-calls' || message.type === 'tool-call-result') {
+                const toolCall = (message.toolCalls && message.toolCalls[0]) || message.toolCall;
+                if (!toolCall) return;
+
+                const funcName = toolCall.function?.name;
+                const args = JSON.parse(toolCall.function?.arguments || "{}");
+
+                if (funcName === 'schedule_appointment') {
+                    const formattedDate = new Date(args.start_time).toLocaleString([], {
+                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    });
+                    window.showSummary(args.patient_name, "BOOKED", args.reason, formattedDate);
+                } 
+                else if (funcName === 'cancel_appointment') {
+                    window.showSummary(args.patient_name, "CANCELLED", "Requested", args.date);
+                }
+            }
+        });
     </script>
 </body>
 </html>
