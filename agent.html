@@ -7,17 +7,13 @@
     
     <style>
         /* --- GLOBAL STYLES --- */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Inter', sans-serif;
             background-color: #0f172a; 
             color: #f8fafc;
-            padding: 2vh 5vw; /* 10% total side margin */
+            padding: 2vh 5vw; 
             height: 100vh;
             display: flex;
             align-items: center;
@@ -68,11 +64,7 @@
         canvas { width: 100%; height: 100%; }
 
         /* --- 2. CONTROLS --- */
-        .controls {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-        }
+        .controls { display: flex; gap: 12px; justify-content: center; }
 
         .btn {
             padding: 10px 25px;
@@ -91,7 +83,6 @@
         #decline-btn { background: #1e293b; color: #94a3b8; }
         #decline-btn:hover { background: #ef4444; color: white; }
 
-        /* --- 3. STATUS --- */
         #status-box {
             font-size: 0.7rem;
             color: #64748b;
@@ -100,11 +91,8 @@
             letter-spacing: 1.5px;
         }
 
-        /* --- 4. ACTIVITY SUMMARY (PERMANENT) --- */
-        #summary-section {
-            width: 100%;
-            margin: 5px 0;
-        }
+        /* --- 3. ACTIVITY SUMMARY --- */
+        #summary-section { width: 100%; margin: 5px 0; }
 
         .summary-header {
             font-size: 0.7rem;
@@ -133,22 +121,13 @@
             margin-bottom: 3px;
         }
 
-        .summary-cell div {
-            font-size: 0.9rem;
-            font-weight: 700;
-            color: #ffffff;
-        }
+        .summary-cell div { font-size: 0.9rem; font-weight: 700; color: #ffffff; }
 
         .status-booked { color: #4CAF50 !important; }
         .status-cancelled { color: #ef4444 !important; }
 
-        /* --- 5. DASHBOARD STATS --- */
-        .dashboard {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            width: 100%;
-        }
+        /* --- 4. DASHBOARD STATS --- */
+        .dashboard { display: flex; justify-content: space-between; gap: 12px; width: 100%; }
 
         .card {
             flex: 1;
@@ -158,20 +137,9 @@
             border: 1px solid #1e293b;
         }
 
-        .card-label {
-            font-size: 0.6rem;
-            color: #94a3b8;
-            text-transform: uppercase;
-            margin-bottom: 4px;
-        }
+        .card-label { font-size: 0.6rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
+        .card-value { font-size: clamp(1rem, 2.5vh, 1.4rem); font-weight: 800; color: #ffffff; }
 
-        .card-value {
-            font-size: clamp(1rem, 2.5vh, 1.4rem);
-            font-weight: 800;
-            color: #ffffff;
-        }
-
-        /* --- RESPONSIVE --- */
         @media (max-width: 768px) {
             body { overflow: auto; height: auto; padding: 20px; }
             .container { height: auto; gap: 15px; }
@@ -200,9 +168,8 @@
 
         <div id="status-box">Status: Disconnected</div>
 
-        <!-- Activity Table (Always Present) -->
         <div id="summary-section">
-            <div class="summary-header">Latest Database Activity</div>
+            <div class="summary-header">Session Activity</div>
             <div class="summary-table">
                 <div class="summary-cell"><span>Patient</span><div id="sum-name">-</div></div>
                 <div class="summary-cell"><span>Action</span><div id="sum-status">-</div></div>
@@ -212,18 +179,9 @@
         </div>
 
         <div class="dashboard">
-            <div class="card">
-                <div class="card-label">Calls Handled</div>
-                <div class="card-value" id="stat-calls">0</div>
-            </div>
-            <div class="card">
-                <div class="card-label">Talk Time</div>
-                <div class="card-value" id="stat-time">0m 0s</div>
-            </div>
-            <div class="card">
-                <div class="card-label">Appointments</div>
-                <div class="card-value" id="stat-apps">0</div>
-            </div>
+            <div class="card"><div class="card-label">Calls Handled</div><div class="card-value" id="stat-calls">0</div></div>
+            <div class="card"><div class="card-label">Talk Time</div><div class="card-value" id="stat-time">0m 0s</div></div>
+            <div class="card"><div class="card-label">Appointments</div><div class="card-value" id="stat-apps">0</div></div>
         </div>
     </div>
 
@@ -239,6 +197,7 @@
 
         let audioContext, analyser, dataArray, animationId;
         let userAmp = 0, agentAmp = 0, phase = 0;
+        let currentCallStartTime = null; 
 
         function resize() {
             canvas.width = canvas.offsetWidth;
@@ -247,11 +206,24 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // --- DATABASE POLLING LOGIC ---
+        // --- SESSION PRIVACY LOGIC ---
+        function resetTable() {
+            document.getElementById('sum-name').innerText = "-";
+            document.getElementById('sum-status').innerText = "-";
+            document.getElementById('sum-status').className = "";
+            document.getElementById('sum-reason').innerText = "-";
+            document.getElementById('sum-date').innerText = "-";
+        }
+
         async function fetchLatestActivity() {
+            // If no call is active, don't show any data
+            if (!currentCallStartTime) {
+                resetTable();
+                return;
+            }
+
             try {
-                // IMPORTANT: Ensure your backend.py has the /latest_activity/ endpoint
-                const response = await fetch('/latest_activity/');
+                const response = await fetch(`/latest_activity/?since=${currentCallStartTime}`);
                 const data = await response.json();
 
                 const nameEl = document.getElementById('sum-name');
@@ -259,7 +231,6 @@
                 const reasonEl = document.getElementById('sum-reason');
                 const dateEl = document.getElementById('sum-date');
 
-                // Update only if data changed
                 if (nameEl.innerText !== data.name) {
                     nameEl.innerText = data.name;
                     statusEl.innerText = data.status;
@@ -267,38 +238,12 @@
                     reasonEl.innerText = data.reason;
                     dateEl.innerText = data.date;
                 }
-            } catch (err) {
-                console.log("DB sync...");
-            }
-        }
-        // Check DB every 2 seconds
-        setInterval(fetchLatestActivity, 1000);
-
-        // Stats Animation
-        function animateValue(id, start, end, duration, suffix = "") {
-            const obj = document.getElementById(id);
-            let startTimestamp = null;
-            const step = (timestamp) => {
-                if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                if (id === "stat-time") {
-                    const secs = Math.floor(progress * ((56 * 60) + 33));
-                    obj.innerHTML = `${Math.floor(secs/60)}m ${secs%60}s${suffix}`;
-                } else {
-                    obj.innerHTML = Math.floor(progress * (end - start) + start) + suffix;
-                }
-                if (progress < 1) window.requestAnimationFrame(step);
-            };
-            window.requestAnimationFrame(step);
+            } catch (err) { console.log("DB Sync..."); }
         }
 
-        window.addEventListener('load', () => {
-            animateValue("stat-calls", 0, 70, 2000, "+");
-            animateValue("stat-time", 0, 0, 2000, "+");
-            animateValue("stat-apps", 0, 49, 2000, "+");
-        });
+        setInterval(fetchLatestActivity, 1000); // 1-second responsive polling
 
-        // Waveform Logic
+        // Waveform Visualizer
         async function startVisualizer() {
             try {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -322,7 +267,7 @@
             }
             userAmp = Math.sqrt(sum / dataArray.length) * 120;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawSineWave(userAmp *3, "#ff4b2b", 0.6, 1.2); 
+            drawSineWave(userAmp * 3, "#ff4b2b", 0.6, 1.2); 
             drawSineWave(agentAmp * 30, "#4CAF50", 0.8, 1.0); 
             phase += 0.15;
         }
@@ -340,6 +285,7 @@
             ctx.stroke();
         }
 
+        // --- EVENTS ---
         document.getElementById("call-btn").addEventListener("click", () => {
             vapi.start(assistantId);
             startVisualizer();
@@ -347,13 +293,23 @@
 
         document.getElementById("decline-btn").addEventListener("click", () => { vapi.stop(); });
 
-        vapi.on('call-start', () => { statusBox.innerText = "Live Connection"; statusBox.style.color = "#4CAF50"; });
+        vapi.on('call-start', () => { 
+            currentCallStartTime = new Date().toISOString(); // Start session clock
+            resetTable(); 
+            statusBox.innerText = "Live Connection"; 
+            statusBox.style.color = "#4CAF50"; 
+        });
+
         vapi.on('call-end', () => { 
+            currentCallStartTime = null; // Kill session
+            resetTable(); 
             cancelAnimationFrame(animationId);
-            statusBox.innerText = "Disconnected"; statusBox.style.color = "#64748b";
+            statusBox.innerText = "Disconnected"; 
+            statusBox.style.color = "#64748b";
             userAmp = 0; agentAmp = 0;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         });
+
         vapi.on('volume-level', (v) => { agentAmp = v; });
     </script>
 </body>
