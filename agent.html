@@ -3,100 +3,268 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexClinic Voice Agent</title>
+    <title>NexClinic | AI Receptionist</title>
+    
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; background-color: #f4f4f9; }
-        .btn { padding: 15px 30px; font-size: 18px; cursor: pointer; border: none; border-radius: 5px; margin: 10px; color: white; font-weight: bold; }
-        
-        #call-btn { background-color: #4CAF50; } /* Green */
-        #call-btn:hover { background-color: #45a049; }
-        
-        #decline-btn { background-color: #f44336; } /* Red */
-        #decline-btn:hover { background-color: #da190b; }
-        
-        #status-box { margin-top: 20px; padding: 15px; border-radius: 5px; background-color: #e0e0e0; display: inline-block; min-width: 300px; font-weight: bold; }
+        /* --- CSS (The "Beautiful" Part) --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #0f172a; /* Professional Dark Navy */
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        h1 span {
+            color: #4CAF50; /* NexClinic Green */
+        }
+
+        p.subtitle {
+            color: #94a3b8;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+
+        /* The Visualizer Box */
+        #waveform-container {
+            width: 100%;
+            height: 250px;
+            background: #000000;
+            border-radius: 24px;
+            position: relative;
+            margin-bottom: 30px;
+            border: 1px solid #1e293b;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Buttons Area */
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 16px 32px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #call-btn {
+            background: #4CAF50;
+            color: white;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        #call-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        #decline-btn {
+            background: #1e293b;
+            color: #94a3b8;
+        }
+
+        #decline-btn:hover {
+            background: #ef4444;
+            color: white;
+        }
+
+        #status-box {
+            margin-top: 25px;
+            font-size: 0.9rem;
+            color: #64748b;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Responsive Auto-Adjustment */
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8rem; }
+            #waveform-container { height: 180px; }
+            .btn { width: 100%; justify-content: center; }
+        }
     </style>
 </head>
 <body>
 
-    <h1>NexClinic AI Receptionist</h1>
-    
-    <button id="call-btn" class="btn">📞 Call Agent</button>
-    <button id="decline-btn" class="btn">🛑 Decline / End</button>
-    
-    <br>
-    <div id="status-box">Status: Disconnected</div>
+    <div class="container">
+        <h1>NexClinic <span>AI</span></h1>
+        <p class="subtitle">Next-Generation Voice Receptionist</p>
+
+        <!-- Waveform Centerpiece -->
+        <div id="waveform-container">
+            <canvas id="waveform-canvas"></canvas>
+        </div>
+
+        <div class="controls">
+            <button id="call-btn" class="btn">
+                <span>📞</span> Start Call
+            </button>
+            <button id="decline-btn" class="btn">
+                <span>🛑</span> End Connection
+            </button>
+        </div>
+
+        <div id="status-box">Status: Disconnected</div>
+    </div>
 
     <script type="module">
-        // Import Vapi correctly using modern ES Modules
         import Vapi from "https://esm.sh/@vapi-ai/web";
 
-        try {
-            // --- IMPORTANT: PASTE YOUR KEYS HERE ---
-            const vapi = new Vapi("860dd056-1472-45de-a12e-df59fad649e5");
-            const assistantId = "f4c6961f-9aa9-44e2-ba6e-ceb7d8233c32";
+        // Vapi Configuration
+        const vapi = new Vapi("860dd056-1472-45de-a12e-df59fad649e5");
+        const assistantId = "f4c6961f-9aa9-44e2-ba6e-ceb7d8233c32";
 
-            const callBtn = document.getElementById("call-btn");
-            const declineBtn = document.getElementById("decline-btn");
-            const statusBox = document.getElementById("status-box");
+        const canvas = document.getElementById("waveform-canvas");
+        const ctx = canvas.getContext("2d");
+        const statusBox = document.getElementById("status-box");
 
-            callBtn.addEventListener("click", async () => {
-                statusBox.innerText = "Status: Requesting Microphone & Connecting...";
-                statusBox.style.backgroundColor = "#fff3cd"; // Yellow
-                
-                // Add a check to see if the browser supports media devices
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    statusBox.innerText = "Error: Your browser is blocking the microphone (Try using HTTPS).";
-                    statusBox.style.backgroundColor = "#f8d7da"; // Red
-                    return;
-                }
+        let audioContext, analyser, dataArray, animationId;
+        let userAmp = 0;   // Mic volume
+        let agentAmp = 0;  // AI volume
+        let phase = 0;
 
-                try {
-                    // Start the call
-                    vapi.start(assistantId);
-                } catch (err) {
-                    statusBox.innerText = "Error starting call. Check console.";
-                    statusBox.style.backgroundColor = "#f8d7da"; // Red
-                    console.error(err);
-                }
-            });
-
-            declineBtn.addEventListener("click", () => {
-                vapi.stop();
-                statusBox.innerText = "Status: Call Declined / Ended.";
-                statusBox.style.backgroundColor = "#e0e0e0"; // Gray
-            });
-
-            // Vapi Status Events
-            vapi.on('call-start', () => {
-                statusBox.innerText = "Status: Call Active! Start speaking.";
-                statusBox.style.backgroundColor = "#d4edda"; // Green
-            });
-
-            vapi.on('call-end', () => {
-                statusBox.innerText = "Status: Call Ended.";
-                statusBox.style.backgroundColor = "#e0e0e0"; // Gray
-            });
-
-            vapi.on('error', (error) => {
-                console.error("Vapi Error:", error);
-                
-                // Make the error message more readable
-                let errorMsg = error.message || "Failed to connect.";
-                if (errorMsg.toLowerCase().includes("mic") || errorMsg.toLowerCase().includes("permission")) {
-                    errorMsg = "Microphone access denied! Please allow the mic and use HTTPS.";
-                }
-                
-                statusBox.innerText = "Error: " + errorMsg;
-                statusBox.style.backgroundColor = "#f8d7da"; // Red
-            });
-
-        } catch (err) {
-            document.getElementById("status-box").innerText = "Fatal Setup Error! Check console.";
-            document.getElementById("status-box").style.backgroundColor = "#f8d7da";
-            console.error("Setup Error:", err);
+        // Resize canvas to fit container
+        function resize() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
         }
-    </script>
+        window.addEventListener('resize', resize);
+        resize();
 
+        async function startVisualizer() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const source = audioContext.createMediaStreamSource(stream);
+                
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 1024;
+                source.connect(analyser);
+
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+                draw();
+            } catch (err) {
+                console.error("Mic access denied", err);
+            }
+        }
+
+        function draw() {
+            animationId = requestAnimationFrame(draw);
+            analyser.getByteTimeDomainData(dataArray);
+
+            // Calculate current mic volume (User)
+            let sum = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+                let v = (dataArray[i] - 128) / 128;
+                sum += v * v;
+            }
+            userAmp = Math.sqrt(sum / dataArray.length) * 200;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw Waves (on the same horizontal center line)
+            drawSineWave(userAmp, "#ff4b2b", 0.6, 1.2); // Red Patient Wave
+            drawSineWave(agentAmp * 250, "#4CAF50", 0.7, 1.0); // Green Agent Wave
+            
+            phase += 0.1; // Speed of movement
+        }
+
+        function drawSineWave(amp, color, opacity, freq) {
+            ctx.beginPath();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = color;
+            ctx.globalAlpha = opacity;
+
+            for (let x = 0; x < canvas.width; x++) {
+                // The math: centerY + amplitude * sin(x * frequency + movement)
+                let y = (canvas.height / 2) + amp * Math.sin((x / 60) * freq + phase);
+                if (x === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+
+        // --- Button Events ---
+        document.getElementById("call-btn").addEventListener("click", () => {
+            statusBox.innerText = "Status: Connecting...";
+            vapi.start(assistantId);
+            startVisualizer();
+        });
+
+        document.getElementById("decline-btn").addEventListener("click", () => {
+            vapi.stop();
+        });
+
+        // --- Vapi Event Listeners ---
+        vapi.on('call-start', () => {
+            statusBox.innerText = "Status: Live Connection";
+            statusBox.style.color = "#4CAF50";
+        });
+
+        vapi.on('call-end', () => {
+            cancelAnimationFrame(animationId);
+            statusBox.innerText = "Status: Disconnected";
+            statusBox.style.color = "#64748b";
+            userAmp = 0; 
+            agentAmp = 0;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
+        vapi.on('message', (message) => {
+            if (message.type === 'volume-level') {
+                agentAmp = message.volume; // 0.0 to 1.0
+            }
+        });
+
+        vapi.on('error', (err) => {
+            console.error(err);
+            statusBox.innerText = "Error: Check Microphone";
+        });
+    </script>
 </body>
 </html>
