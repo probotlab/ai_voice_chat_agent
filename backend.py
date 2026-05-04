@@ -8,8 +8,7 @@ import uvicorn
 import os
 import threading
 import time
-
-# Import from your database.py file
+from sqlalchemy import select, text
 from database import init_db, Appointment, get_db, engine
 
 # Initialize the database tables
@@ -61,7 +60,7 @@ threading.Thread(target=keep_db_warm, daemon=True).start()
 
 # --- ROUTES ---
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def health_check():
     return {"status": "NexClinic AI is Live"}
 
