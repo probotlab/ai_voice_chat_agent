@@ -8,7 +8,7 @@ import uvicorn
 import os
 
 # Import from your database.py file
-from database import init_db, Appointment, get_db
+from database import init_db, Appointment, get_db, engine
 
 # Initialize the database tables
 init_db()
@@ -36,6 +36,32 @@ class CancelAppointmentResponse(BaseModel):
 
 # --- FASTAPI APP ---
 app = FastAPI()
+
+# --- 1. THE HEARTBEAT (Keep Neon Awake) ---
+def keep_db_warm():
+    """Pings the database every 4 minutes to prevent Neon from sleeping."""
+    while True:
+        try:
+            # Connect and run a tiny query
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+                conn.commit()
+            # print("DB Heartbeat: Neon is awake.")
+        except Exception as e:
+            print(f"DB Heartbeat Error: {e}")
+        
+        # Neon sleeps after 5 mins of inactivity, so we ping at 4 mins
+        time.sleep(240) 
+
+# Start the heartbeat thread immediately when the script loads
+# This works on Render because it's at the top level
+threading.Thread(target=keep_db_warm, daemon=True).start()
+
+# --- ROUTES ---
+
+@app.get("/")
+def health_check():
+    return {"status": "NexClinic AI is Live"}
 
 # 1. Schedule Appointment
 @app.post("/schedule_appointment/", response_model=AppointmentResponse)
@@ -85,35 +111,35 @@ def cancel_appointment(request: CancelAppointmentRequest, db: Session = Depends(
     return CancelAppointmentResponse(canceled_count=len(appointments))
 
 # 3. List Appointments (FIXED for 422 Error)
-# @app.get("/list_appointments/")
-# def list_appointments(date: dt.date | None = None, db: Session = Depends(get_db)):
-#     query = select(Appointment).where(Appointment.cancelled == False)
+@app.get("/list_appointments/")
+def list_appointments(date: dt.date | None = None, db: Session = Depends(get_db)):
+    query = select(Appointment).where(Appointment.cancelled == False)
     
-#     # If the frontend passes a specific date, filter by it
-#     if date:
-#         start_dt = dt.datetime.combine(date, dt.time.min)
-#         end_dt = start_dt + dt.timedelta(days=1)
-#         query = query.where(Appointment.start_time >= start_dt)
-#         query = query.where(Appointment.start_time < end_dt)
+    # If the frontend passes a specific date, filter by it
+    if date:
+        start_dt = dt.datetime.combine(date, dt.time.min)
+        end_dt = start_dt + dt.timedelta(days=1)
+        query = query.where(Appointment.start_time >= start_dt)
+        query = query.where(Appointment.start_time < end_dt)
         
-#     query = query.order_by(Appointment.start_time.asc())
+    query = query.order_by(Appointment.start_time.asc())
     
-#     result = db.execute(query)
-#     appointments = result.scalars().all()
+    result = db.execute(query)
+    appointments = result.scalars().all()
     
-#     booked_appointments = []
-#     for appointment in appointments:
-#         appointment_obj = AppointmentResponse(
-#             id=appointment.id,
-#             patient_name=appointment.patient_name,
-#             reason=appointment.reason,
-#             start_time=appointment.start_time,
-#             cancelled=appointment.cancelled,
-#             created_at=appointment.created_at
-#         )
-#         booked_appointments.append(appointment_obj) # Fixed: Correct list append
+    booked_appointments = []
+    for appointment in appointments:
+        appointment_obj = AppointmentResponse(
+            id=appointment.id,
+            patient_name=appointment.patient_name,
+            reason=appointment.reason,
+            start_time=appointment.start_time,
+            cancelled=appointment.cancelled,
+            created_at=appointment.created_at
+        )
+        booked_appointments.append(appointment_obj) # Fixed: Correct list append
         
-#     return booked_appointments
+    return booked_appointments
 
 @app.get("/available_slots/")
 def get_available_slots(date: dt.date | None = None, db: Session = Depends(get_db)):
